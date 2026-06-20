@@ -87,7 +87,7 @@ jobs:
           echo "--- Built files ---"
           ls -lh /tmp/wheels/
 
-      - name: Verify wheel is CUDA-compiled
+      - name: Verify wheel contains _C.so (compiled CUDA extension)
         run: |
           cd /tmp/wheels
           WHEEL=$(ls xformers-*.whl 2>/dev/null | head -1)
@@ -96,16 +96,16 @@ jobs:
             exit 1
           fi
           echo "Wheel: $WHEEL"
-          # Positiv auf cp310 prüfen – py3-none-any UND py39-none sind beide falsch
-          if ! echo "$WHEEL" | grep -q "cp310"; then
-            echo "ERROR: Kein cp310-Wheel – CUDA-Ops wurden NICHT kompiliert!"
-            echo "Erwartet: xformers-*-cp310-cp310-linux_x86_64.whl"
-            echo "Bekommen: $WHEEL"
+          # xformers 0.0.27+ nutzt py39-none-linux_x86_64 intentional –
+          # CUDA-Ops stecken in _C.so, nicht im Python-ABI-Tag
+          if ! python -m zipfile -l "$WHEEL" | grep -q "_C.so"; then
+            echo "ERROR: _C.so fehlt – CUDA-Kernels wurden nicht kompiliert!"
             python -m zipfile -l "$WHEEL" | head -20
             exit 1
           fi
-          echo "OK: cp310-Wheel mit CUDA-Ops"
-          python -m zipfile -l "$WHEEL" | grep -E "\.so|_C\." | head -10
+          C_SIZE=$(python -m zipfile -l "$WHEEL" | grep "_C.so" | awk '{print $4}')
+          echo "OK: _C.so gefunden (${C_SIZE} Bytes)"
+          python -m zipfile -l "$WHEEL" | grep "_C.so"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
