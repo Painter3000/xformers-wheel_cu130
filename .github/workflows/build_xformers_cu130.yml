@@ -96,11 +96,15 @@ jobs:
             exit 1
           fi
           echo "Wheel: $WHEEL"
-          if echo "$WHEEL" | grep -q "py3-none-any"; then
-            echo "ERROR: py3-none-any – CUDA wurde NICHT kompiliert!"
+          # Positiv auf cp310 prüfen – py3-none-any UND py39-none sind beide falsch
+          if ! echo "$WHEEL" | grep -q "cp310"; then
+            echo "ERROR: Kein cp310-Wheel – CUDA-Ops wurden NICHT kompiliert!"
+            echo "Erwartet: xformers-*-cp310-cp310-linux_x86_64.whl"
+            echo "Bekommen: $WHEEL"
+            python -m zipfile -l "$WHEEL" | head -20
             exit 1
           fi
-          echo "OK: CUDA-kompiliertes Wheel"
+          echo "OK: cp310-Wheel mit CUDA-Ops"
           python -m zipfile -l "$WHEEL" | grep -E "\.so|_C\." | head -10
 
       - name: Upload artifact
