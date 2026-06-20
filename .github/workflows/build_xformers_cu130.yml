@@ -80,9 +80,11 @@ jobs:
           mkdir -p /tmp/wheels
           cd xformers
           # --no-build-isolation: installiertes torch 2.11.0 verwenden
-          # --no-deps beim späteren pip install verwenden, damit kein torch-Downgrade
+          # --no-deps: NUR das xformers-Wheel bauen, keine Abhängigkeiten sammeln
+          #            (verhindert Disk-Full durch torch 2.12.x / NVIDIA-Pakete)
           python -m pip wheel . \
             --no-build-isolation \
+            --no-deps \
             -w /tmp/wheels/
           echo "--- Built files ---"
           ls -lh /tmp/wheels/
